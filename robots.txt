@@ -1,1 +1,1 @@
-Sitemap: ZhanYishu.github.io/sitemap.xml
+Sitemap: https://zhanyishu.github.io/sitemap.xml
