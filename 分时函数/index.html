@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Snowboarding and my life - My personal blog - ZhanYishu</title>
-	<meta name="description" content="You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes.">
+	<title>分时函数 - My personal blog - ZhanYishu</title>
+	<meta name="description" content="设计模式之分时函数">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta property="og:image" content="">
@@ -38,8 +38,8 @@
         <span class="menu-icon-close"><i class="fa fa-times" aria-hidden="true"></i></span>
         <ul>
           <li><a href="/">首页</a></li>
-          <li><a href="/about">关于我</a></li>
           <li><a href="/tags">分类</a></li>
+          <li><a href="/about">ABOUT ME</a></li>
         </ul>
       </nav>
       <p class="logo"><a href="/">詹一树</a></p>
@@ -52,45 +52,53 @@
 
   <article class="article-page">
     <div class="page-image">
-      <div class="cover-image" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"></div>
+      <div class="cover-image" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"></div>
     </div>
     <div class="wrapper">
       <div class="page-content">
         <div class="header-page">
-          <h1 class="page-title">Snowboarding and my life</h1>
-          <div class="page-date"><time datetime="2017-08-22 18:32:20 +0800">2017, Aug 22</time></div>
+          <h1 class="page-title">分时函数</h1>
+          <div class="page-date"><time datetime="2017-05-08 00:00:00 +0800">2017, May 08</time></div>
         </div>
-        <p>You’ll find this post in your <code class="highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
+        <h4 id="分时函数用于解决首次加载或渲染过多资源造成浏览器卡顿的现象可以有效解决浏览器性能问题">分时函数用于解决首次加载或渲染过多资源造成浏览器卡顿的现象，可以有效解决浏览器性能问题</h4>
 
-<p>To add new posts, simply add a file in the <code class="highlighter-rouge">_posts</code> directory that follows the convention <code class="highlighter-rouge">YYYY-MM-DD-name-of-post.ext</code> and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.</p>
-
-<p>Jekyll also offers powerful support for code snippets:</p>
-
-<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
-  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
-<span class="k">end</span>
-<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
-<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
-
-<p>Check out the <a href="https://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>
-
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function timeChunk(arr, count, fn, interval = 200) {
+    let newArr = [];
+    let time = 0;
+    let timer = null;
+    const start = function() {
+        newArr = arr.splice(0, count);
+        fn(count);
+    }
+    
+    return function() {
+        timer = setInterval(function(){
+            time = interval;
+            if (arr.length === 0) return clearInterval(timer);
+            start();
+        }, time)
+    }
+}
+</code></pre></div></div>
+<ul>
+  <li>参数arr：要加载的全部资源</li>
+  <li>count：一次加载资源的个数</li>
+  <li>fn：加载资源方法</li>
+  <li>interval：加载资源间隔时间</li>
+</ul>
 
         <div class="page-footer">
           <div class="page-tag">
             <span>Tags:</span>
             
-            <a href="/tags#Blog" class="tag">| Blog</a>
-            
-            <a href="/tags#Mountains" class="tag">| Mountains</a>
-            
-            <a href="/tags#Sport" class="tag">| Sport</a>
+            <a href="/tags#JS" class="tag">| JS</a>
             
           </div><!-- End Tags -->
           <div class="page-share">
             <span>Share:</span>
-            <a href="https://twitter.com/intent/tweet?text=Snowboarding and my life&url=https://zhanyishu.github.io/snowboarding-and-my-life/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
-            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/snowboarding-and-my-life/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
-            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/snowboarding-and-my-life/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/intent/tweet?text=分时函数&url=https://zhanyishu.github.io/%E5%88%86%E6%97%B6%E5%87%BD%E6%95%B0/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/%E5%88%86%E6%97%B6%E5%87%BD%E6%95%B0/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/%E5%88%86%E6%97%B6%E5%87%BD%E6%95%B0/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
           </div><!-- End Share -->
         </div>
         <section class="author-box">
@@ -120,19 +128,19 @@
   <div class="recent-list">
     
       
-        <a href="/i-conquer-the-himalayas/" class="recent-item" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"><span>I conquer the Himalayas</span></a>
+        <a href="/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" class="recent-item" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"><span>从vue内联处理器看本质</span></a>
       
     
       
-        <a href="/i-meet-the-sunset/" class="recent-item" style="background: url(/assets/img/post-2.jpg) center no-repeat; background-size: cover;"><span>I meet the sunset</span></a>
+        <a href="/npm%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3/" class="recent-item" style="background: url(/assets/img/post-3.jpg) center no-repeat; background-size: cover;"><span>npm简单理解</span></a>
       
     
       
-        <a href="/meeting-with-adventures/" class="recent-item" style="background: url(/assets/img/post-3.jpg) center no-repeat; background-size: cover;"><span>On a meeting with adventures</span></a>
+        <a href="/%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B9%8Bvue-nextTick/" class="recent-item" style="background: url(/assets/img/post-2.jpg) center no-repeat; background-size: cover;"><span>任务队列之vue-nextTick</span></a>
       
     
       
-        <a href="/snowboarding-and-my-life/" class="recent-item" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"><span>Snowboarding and my life</span></a>
+        <a href="/%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98%E5%87%BD%E6%95%B0/" class="recent-item" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"><span>对象缓存</span></a>
       
     
   </div>

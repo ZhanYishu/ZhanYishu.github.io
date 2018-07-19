@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>从vue内联处理器看本质 - My personal blog - ZhanYishu</title>
+	<meta name="description" content="内联处理器">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta property="og:image" content="">
+	<link rel="shortcut icon" href="/assets/img/favicon/favicon.ico" type="image/x-icon">
+	<link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/assets/img/favicon/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/assets/img/favicon/apple-touch-icon-114x114.png">
+	<!-- Chrome, Firefox OS and Opera -->
+	<meta name="theme-color" content="#311e3e">
+	<!-- Windows Phone -->
+	<meta name="msapplication-navbutton-color" content="#311e3e">
+	<!-- iOS Safari -->
+	<meta name="apple-mobile-web-app-status-bar-style" content="#311e3e">
+	<!-- Google Fonts -->
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+	<!-- Font Awesome -->
+	<link rel="stylesheet" href="/assets/fonts/font-awesome/css/font-awesome.min.css">
+	<!-- Styles -->
+	<link rel="stylesheet" href="/assets/css/main.css">
+</head>
+
+<body>
+  <div class="flex-container">
+  <header class="main-header">
+  <div class="wrapper">
+    <div class="header-flex">
+      <div class="menu-icon-container">
+        <span class="menu-icon"><i class="fa fa-bars" aria-hidden="true"></i></span>
+      </div>
+      <nav class="main-nav">
+        <span class="menu-icon-close"><i class="fa fa-times" aria-hidden="true"></i></span>
+        <ul>
+          <li><a href="/">首页</a></li>
+          <li><a href="/tags">分类</a></li>
+          <li><a href="/about">ABOUT ME</a></li>
+        </ul>
+      </nav>
+      <p class="logo"><a href="/">詹一树</a></p>
+      <div class="search-icon-container">
+        <span class="search-icon"><a><i class="fa fa-search" aria-hidden="true"></i></a></span>
+      </div>
+    </div>
+  </div>
+</header> <!-- End Header -->
+
+  <article class="article-page">
+    <div class="page-image">
+      <div class="cover-image" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"></div>
+    </div>
+    <div class="wrapper">
+      <div class="page-content">
+        <div class="header-page">
+          <h1 class="page-title">从vue内联处理器看本质</h1>
+          <div class="page-date"><time datetime="2018-07-18 00:00:00 +0800">2018, Jul 18</time></div>
+        </div>
+        <h3 id="一vue内联处理器有哪些类型">一、vue内联处理器有哪些类型</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;template&gt;
+  &lt;h3&gt;1、简单函数&lt;/h3&gt;
+  &lt;el-button @click=handleClick&gt;点击我&lt;/el-button&gt;
+  &lt;h3&gt;2、立即执行函数，且带作用域&lt;/h3&gt;
+  &lt;el-select v-model="value" placeholder="请选择"&gt;
+    &lt;el-option
+      v-for="item in options"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value"
+      @click="handleClick(item)"
+    &gt;&lt;/el-option&gt;
+  &lt;/el-select&gt;
+  &lt;h3&gt;3、立即执行函数，带内部抛出数据&lt;/h3&gt;
+  &lt;el-select v-model="value" placeholder="请选择"&gt;
+    &lt;el-option
+      v-for="item in options"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value"
+      @click.native="handleClick($event)"
+    &gt;&lt;/el-option&gt;
+  &lt;/el-select&gt;
+  &lt;h3&gt;4、立即执行函数，且内部抛出单个数据与携带作用域&lt;/h3&gt;
+  &lt;el-select v-model="value" placeholder="请选择"&gt;
+    &lt;el-option
+      v-for="item in options"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value"
+      @click="handleClick($event, item)"
+    &gt;&lt;/el-option&gt;
+  &lt;/el-select&gt;
+  &lt;h3&gt;5、立即执行函数，内部要抛出多个数据且携带作用域&lt;/h3&gt;
+  &lt;ul&gt;
+    &lt;event-component v-for="item in options" @click="handleClick(arguments, item)"&gt;&lt;/event-component&gt;
+  &lt;/ul&gt;
+&lt;/template&gt;
+&lt;script&gt;
+export default {
+	components: {
+      EventComponent: {
+      	template: `&lt;li @click="handleClick"&gt;&lt;slot&gt;&lt;/slot&gt;&lt;/li&gt;`,
+        methods: {
+          handleClick (ev) {
+          	this.$emit('click', ev, 'eventComponent')
+          }
+        }
+      }
+    },
+    data() {
+      return {
+        options: [{
+          value: '选项1',
+          label: '黄金糕'
+        }, {
+          value: '选项2',
+          label: '双皮奶'
+        }, {
+          value: '选项3',
+          label: '蚵仔煎'
+        }, {
+          value: '选项4',
+          label: '龙须面'
+        }, {
+          value: '选项5',
+          label: '北京烤鸭'
+        }],
+        value: ''
+      }
+    },
+    methods: {
+      handleClick (ev, scope) {
+      	console.log(ev, scope)
+      	// 1、event, undefined
+      	// 2、item, undefined
+      	// 3、event, undefined
+      	// 4、event, item
+      	// 5、arguments（'1': event, '2': 'eventComponent'）,item
+      }
+    }
+  }
+&lt;/script&gt;
+</code></pre></div></div>
+<h3 id="二事件类型">二、事件类型</h3>
+<ul>
+  <li>简单函数</li>
+  <li>立即执行函数
+    <ul>
+      <li>不带实参立即执行函数</li>
+      <li>带作用域立即执行函数</li>
+      <li>带自定义事件抛出的单个数据</li>
+      <li>带自定义事件抛出的单个数据与携带作用域</li>
+      <li>带自定义事件抛出的多个数据与携带作用域
+        <h4 id="问题">问题</h4>
+      </li>
+    </ul>
+  </li>
+  <li>为什么立即执行函数不立即执行？</li>
+  <li>为什么非要用$event才能带出自定义事件抛出的单个或者多个数据？</li>
+  <li>如果自定义事件要抛出多个数据时怎么接收？
+    <h3 id="分析">分析</h3>
+  </li>
+</ul>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>var fnExpRE = /^([\w$_]+|\([^)]*?\))\s*=&gt;|^function\s*\(/;
+var simplePathRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['[^']*?']|\["[^"]*?"]|\[\d+]|\[[A-Za-z_$][\w$]*])*$/;
+function genHandler(name, handler) {
+  var isMethodPath = simplePathRE.test(handler.value);
+  var isFunctionExpression = fnExpRE.test(handler.value);
+  // 如果匹配到方法路径或者是纯方法则返回对应方法
+  if (isMethodPath || isFunctionExpression) {
+    return handler.value
+  }
+  // 如果是立即执行函数则返回用以下包裹的方法，这就是为什么立即执行函数不执行的原因
+  /* istanbul ignore if */
+  return ("function($event){" + (handler.value) + "}") /
+}
+
+</code></pre></div></div>
+<p>如vue源码，vue模板编译器对模板进行了处理，如果匹配到模板中绑定的方法为方法路径或者为函数则直接返回对应的函数，当触发事件的时候直接执行对应函数；如果匹配到是立即执行函数则对立即执行函数外面包装一层函数，形参为$event，这也是为什么我们能用$event接收自定义事件抛出的数据的原因，如果我们想获取到全部自定义事件抛出的参数就只能用arguments了</p>
+<h3 id="总结">总结</h3>
+<ul>
+  <li>立即执行函数不立即执行，vue对模板进行一层函数封装</li>
+  <li>$event并非总是事件对象，只有在原生dom上绑定事件时才是事件对象，$event其实只是函数调用的第一个实参</li>
+  <li>自定义事件需要接受多个参数且包含作用域时，需要用arguments接收</li>
+  <li>写组件时自定义事件$emit触发事件的时候尽量使用一个对象抛出，避免使用多个数据抛出</li>
+</ul>
+
+        <div class="page-footer">
+          <div class="page-tag">
+            <span>Tags:</span>
+            
+            <a href="/tags#VUE" class="tag">| VUE</a>
+            
+          </div><!-- End Tags -->
+          <div class="page-share">
+            <span>Share:</span>
+            <a href="https://twitter.com/intent/tweet?text=从vue内联处理器看本质&url=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
+          </div><!-- End Share -->
+        </div>
+        <section class="author-box">
+  <img src="/assets/img/adam-face.jpg" alt="詹一树" class="author-img">
+  <div class="author-desc">
+    <h2>詹一树</h2>
+    <p>To do or not to do. It's a question.</p>
+    <ul>
+      
+        <li class="email"><a href="mailto:example.adam@blog.com"><i class="fa fa-envelope-o" aria-hidden="true"></i></a></li>
+      
+      
+        <li class="phone"><a href="tel:044 825 5523"><i class="fa fa-phone" aria-hidden="true"></i></a></li>
+      
+      
+        <li class="website"><a href="https://artemsheludko.github.io" target="_blank"><i class="fa fa-globe" aria-hidden="true"></i></a></li>
+      
+      
+        <li class="twitter"><a href="https://twitter.com/@artemsheludko_" target="_blank"><i class="fa fa-twitter"></i></a></li>
+      
+    </ul>
+  </div>
+</section>
+
+        <div class="recent-box">
+  <h2 class="recent-title">Recent post</h2>
+  <div class="recent-list">
+    
+      
+        <a href="/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" class="recent-item" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"><span>从vue内联处理器看本质</span></a>
+      
+    
+      
+        <a href="/npm%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3/" class="recent-item" style="background: url(/assets/img/post-3.jpg) center no-repeat; background-size: cover;"><span>npm简单理解</span></a>
+      
+    
+      
+        <a href="/%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B9%8Bvue-nextTick/" class="recent-item" style="background: url(/assets/img/post-2.jpg) center no-repeat; background-size: cover;"><span>任务队列之vue-nextTick</span></a>
+      
+    
+      
+        <a href="/%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98%E5%87%BD%E6%95%B0/" class="recent-item" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"><span>对象缓存</span></a>
+      
+    
+  </div>
+</div> <!-- End Recent-Box -->
+
+        <div class="newsletter" id="mc_embed_signup">
+  <h2 class="newsletter-title">Newsletter</h2>
+  <div class="form-container">
+    <p>Subscribe here to get our latest updates</p>
+    <form action="//" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <label class="screen-reader-text" for="mce-EMAIL">Email Address</label>
+      <div class="newsletter-box" id="mc_embed_signup_scroll">
+        <input type="email" name="EMAIL" placeholder="Email address" class="email-input" id="mce-EMAIL" required>
+        <input type="submit" value="Subscribe" name="subscribe" class="subscribe-btn" id="mc-embedded-subscribe">
+      </div>
+    </form>
+  </div>
+</div> <!-- End Newsletter -->
+
+        <section class="comment-area">
+  <div class="comment-wrapper">
+    
+    <div id="disqus_thread" class="article-comments"></div>
+    <script>
+      (function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//mr-brown.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    
+  </div>
+</section> <!-- End Comment Area -->
+
+      </div>
+    </div> <!-- End Wrapper -->
+  </article>
+  <div class="search-box">
+  <div class="wrapper">
+    <div class="search-grid">
+      <form class="search-form">
+        <div id="search-container">
+          <input type="text" id="search-input" class="search" placeholder="Search">
+        </div>
+      </form>
+      <ul id="results-container" class="results-search"></ul>
+      <div class="icon-close-container">
+        <span class="search-icon-close"><i class="fa fa-times" aria-hidden="true"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <footer class="main-footer">
+  <div class="copyright">
+    <p>2018 &copy; 詹一树</p>
+  </div>
+</footer> <!-- End Footer -->
+
+</div>
+
+  <!-- JS -->
+<script src="/assets/js/jquery-3.2.1.min.js"></script>
+<script src="/assets/js/jekyll-search.js"></script>
+<script>
+  SimpleJekyllSearch({
+    searchInput: document.getElementById('search-input'),
+    resultsContainer: document.getElementById('results-container'),
+    json: '/search.json',
+    searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+    noResultsText: 'No results found',
+    fuzzy: false,
+    exclude: ['Welcome']
+  });
+</script>
+<script src="/assets/js/main.js"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', '', 'auto');
+  ga('send', 'pageview');
+</script> <!-- End Analytics -->
+
+</body>
+</html>

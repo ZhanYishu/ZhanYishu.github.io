@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>I conquer the Himalayas - My personal blog - ZhanYishu</title>
-	<meta name="description" content="You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes.">
+	<title>惰性加载函数 - My personal blog - ZhanYishu</title>
+	<meta name="description" content="设计模式之惰性加载函数">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta property="og:image" content="">
@@ -38,8 +38,8 @@
         <span class="menu-icon-close"><i class="fa fa-times" aria-hidden="true"></i></span>
         <ul>
           <li><a href="/">首页</a></li>
-          <li><a href="/about">关于我</a></li>
           <li><a href="/tags">分类</a></li>
+          <li><a href="/about">ABOUT ME</a></li>
         </ul>
       </nav>
       <p class="logo"><a href="/">詹一树</a></p>
@@ -52,42 +52,42 @@
 
   <article class="article-page">
     <div class="page-image">
-      <div class="cover-image" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"></div>
+      <div class="cover-image" style="background: url(/assets/img/post-5.jpg) center no-repeat; background-size: cover;"></div>
     </div>
     <div class="wrapper">
       <div class="page-content">
         <div class="header-page">
-          <h1 class="page-title">I conquer the Himalayas</h1>
-          <div class="page-date"><time datetime="2017-08-25 18:32:20 +0800">2017, Aug 25</time></div>
+          <h1 class="page-title">惰性加载函数</h1>
+          <div class="page-date"><time datetime="2017-04-03 00:00:00 +0800">2017, Apr 03</time></div>
         </div>
-        <p>Vaporware snackwave stumptown, small batch tattooed try-hard prism fanny pack 3 wolf moon edison bulb tofu hot chicken vice. Selvage iPhone hell of tote bag seitan organic PBR&amp;B williamsburg palo santo tousled fanny pack pinterest normcore. Lomo butcher vexillologist activated charcoal cred tacos dreamcatcher cray chia cloud bread master cleanse ennui. Copper mug hella iceland occupy venmo. Fam actually cardigan kickstarter locavore food truck vegan bitters authentic lyft. Vaporware listicle keffiyeh adaptogen. Cloud bread stumptown swag la croix polaroid pickled. Next level yuccie four dollar toast polaroid. Portland chicharrones craft beer helvetica 3 wolf moon.</p>
+        <p>——在处理浏览器的兼容性中，常用的是进行条件判断，然后选用兼容的方法，这样做会让每次调用该方法时都执行了条件判断，浏览器的环境是固定不变的，造成不必要的性能消耗，这时可以采用惰性加载函数解决</p>
 
-<p>Fanny pack wolf asymmetrical PBR&amp;B activated charcoal chia retro iPhone. Everyday carry artisan live-edge bespoke ramps. Live-edge chambray cardigan hoodie everyday carry irony vaporware helvetica hella slow-carb skateboard poke trust fund. Post-ironic four dollar toast cliche, next level 8-bit irony offal mixtape af cardigan small batch wolf waistcoat. Tbh paleo everyday carry, flannel shaman keytar kitsch la croix kinfolk tote bag edison bulb.</p>
-
-<blockquote>
-  <p>Snackwave chillwave seitan whatever, flannel wolf vinyl occupy activated charcoal succulents waistcoat. Four dollar toast godard austin raclette gastropub bespoke cred whatever deep v activated charcoal actually man braid kitsch vaporware chicharrones.</p>
-</blockquote>
-
-<p>Taxidermy shaman irony williamsburg bespoke. Freegan ugh mumblecore selfies, shabby chic neutra everyday carry. Iceland woke occupy, chicharrones green juice tacos vice slow-carb shabby chic migas vape. Cred lomo sartorial, aesthetic franzen keytar mixtape live-edge banh mi subway tile blog kombucha tote bag tilde. Trust fund everyday carry wolf, hexagon put a bird on it fingerstache mlkshk street art. Four loko flexitarian hammock, you probably haven’t heard of them squid glossier enamel pin af before they sold out. Jianbing narwhal chartreuse helvetica 3 wolf moon quinoa. 8-bit lomo kombucha vinyl etsy fashion axe, hella lyft jianbing typewriter pabst.</p>
-
-<p><img src="/assets/img/yosh-ginsu.jpg" alt="Yosh Ginsu" /></p>
-
-<p>8-bit disrupt food truck polaroid, viral you probably haven’t heard of them chillwave next level letterpress williamsburg etsy tthammock intelligentsia. Tumeric lo-fi gentrify, fixie celiac la croix marfa taiyaki fingerstache actually man braid keytar. Brunch coloring book succulents church-key umami affogato. Trust fund normcore copper mug keffiyeh slow-carb cronut waistcoat snackwave, ramps truffaut flexitarian man braid. Celiac flexitarian authentic hashtag wayfarers. Next level pitchfork scenester godard. Salvia etsy edison bulb knausgaard poke jianbing actually. Mlkshk retro cardigan photo booth swag. Occupy shaman austin, meditation green juice flannel succulents twee. Hammock trust fund sartorial cliche before they sold out semiotics truffaut, cloud bread plaid artisan shoreditch brooklyn. Shoreditch air plant asymmetrical DIY. Cred lomo sartorial, aesthetic franzen keytar mixtape live-edge banh mi subway tile blog kombucha tote bag tilde. Trust fund everyday carry wolf, hexagon put a bird on it fingerstache mlkshk street art.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function addEvent(el, event, fn) {
+    if (window.addEventListener) {
+        addEvent = function(el, event, fn) {
+            el.addEventListener(event, fn, false);
+        }
+    } else {
+        addEvent = function(el, event, fn) {
+            el.attachEvent('on' + event, fn);
+        }
+    }
+    addEvent(el, event, fn);
+}
+</code></pre></div></div>
 
         <div class="page-footer">
           <div class="page-tag">
             <span>Tags:</span>
             
-            <a href="/tags#Blog" class="tag">| Blog</a>
-            
-            <a href="/tags#Mountains" class="tag">| Mountains</a>
+            <a href="/tags#JS" class="tag">| JS</a>
             
           </div><!-- End Tags -->
           <div class="page-share">
             <span>Share:</span>
-            <a href="https://twitter.com/intent/tweet?text=I conquer the Himalayas&url=https://zhanyishu.github.io/i-conquer-the-himalayas/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
-            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/i-conquer-the-himalayas/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
-            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/i-conquer-the-himalayas/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/intent/tweet?text=惰性加载函数&url=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
           </div><!-- End Share -->
         </div>
         <section class="author-box">
@@ -117,19 +117,19 @@
   <div class="recent-list">
     
       
-        <a href="/i-conquer-the-himalayas/" class="recent-item" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"><span>I conquer the Himalayas</span></a>
+        <a href="/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" class="recent-item" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"><span>从vue内联处理器看本质</span></a>
       
     
       
-        <a href="/i-meet-the-sunset/" class="recent-item" style="background: url(/assets/img/post-2.jpg) center no-repeat; background-size: cover;"><span>I meet the sunset</span></a>
+        <a href="/npm%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3/" class="recent-item" style="background: url(/assets/img/post-3.jpg) center no-repeat; background-size: cover;"><span>npm简单理解</span></a>
       
     
       
-        <a href="/meeting-with-adventures/" class="recent-item" style="background: url(/assets/img/post-3.jpg) center no-repeat; background-size: cover;"><span>On a meeting with adventures</span></a>
+        <a href="/%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E4%B9%8Bvue-nextTick/" class="recent-item" style="background: url(/assets/img/post-2.jpg) center no-repeat; background-size: cover;"><span>任务队列之vue-nextTick</span></a>
       
     
       
-        <a href="/snowboarding-and-my-life/" class="recent-item" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"><span>Snowboarding and my life</span></a>
+        <a href="/%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98%E5%87%BD%E6%95%B0/" class="recent-item" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"><span>对象缓存</span></a>
       
     
   </div>
