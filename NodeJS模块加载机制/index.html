@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>从vue内联处理器看本质 - My personal blog - ZhanYishu</title>
-	<meta name="description" content="内联处理器">
+	<title>NodeJS模块加载机制 - My personal blog - ZhanYishu</title>
+	<meta name="description" content="NodeJS模块加载机制浅析">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta property="og:image" content="">
@@ -52,157 +52,81 @@
 
   <article class="article-page">
     <div class="page-image">
-      <div class="cover-image" style="background: url(/assets/img/post-4.jpg) center no-repeat; background-size: cover;"></div>
+      <div class="cover-image" style="background: url(/assets/img/post-6.jpg) center no-repeat; background-size: cover;"></div>
     </div>
     <div class="wrapper">
       <div class="page-content">
         <div class="header-page">
-          <h1 class="page-title">从vue内联处理器看本质</h1>
-          <div class="page-date"><time datetime="2018-07-18 00:00:00 +0800">2018, Jul 18</time></div>
+          <h1 class="page-title">NodeJS模块加载机制</h1>
+          <div class="page-date"><time datetime="2018-07-22 00:00:00 +0800">2018, Jul 22</time></div>
         </div>
-        <h3 id="一vue内联处理器有哪些类型">一、vue内联处理器有哪些类型</h3>
+        <p>讲NodeJS模块的加载机制前，我们先来讲讲js模块化。</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;template&gt;
-  &lt;h3&gt;1、简单函数&lt;/h3&gt;
-  &lt;el-button @click=handleClick&gt;点击我&lt;/el-button&gt;
-  &lt;h3&gt;2、立即执行函数，且带作用域&lt;/h3&gt;
-  &lt;el-select v-model="value" placeholder="请选择"&gt;
-    &lt;el-option
-      v-for="item in options"
-      :key="item.value"
-      :label="item.label"
-      :value="item.value"
-      @click="handleClick(item)"
-    &gt;&lt;/el-option&gt;
-  &lt;/el-select&gt;
-  &lt;h3&gt;3、立即执行函数，带内部抛出数据&lt;/h3&gt;
-  &lt;el-select v-model="value" placeholder="请选择"&gt;
-    &lt;el-option
-      v-for="item in options"
-      :key="item.value"
-      :label="item.label"
-      :value="item.value"
-      @click.native="handleClick($event)"
-    &gt;&lt;/el-option&gt;
-  &lt;/el-select&gt;
-  &lt;h3&gt;4、立即执行函数，且内部抛出单个数据与携带作用域&lt;/h3&gt;
-  &lt;el-select v-model="value" placeholder="请选择"&gt;
-    &lt;el-option
-      v-for="item in options"
-      :key="item.value"
-      :label="item.label"
-      :value="item.value"
-      @click="handleClick($event, item)"
-    &gt;&lt;/el-option&gt;
-  &lt;/el-select&gt;
-  &lt;h3&gt;5、立即执行函数，内部要抛出多个数据且携带作用域&lt;/h3&gt;
-  &lt;ul&gt;
-    &lt;event-component v-for="item in options" @click="handleClick(arguments, item)"&gt;&lt;/event-component&gt;
-  &lt;/ul&gt;
-&lt;/template&gt;
-&lt;script&gt;
-export default {
-	components: {
-      EventComponent: {
-      	template: `&lt;li @click="handleClick"&gt;&lt;slot&gt;&lt;/slot&gt;&lt;/li&gt;`,
-        methods: {
-          handleClick (ev) {
-          	this.$emit('click', ev, 'eventComponent')
-          }
-        }
-      }
-    },
-    data() {
-      return {
-        options: [{
-          value: '选项1',
-          label: '黄金糕'
-        }, {
-          value: '选项2',
-          label: '双皮奶'
-        }, {
-          value: '选项3',
-          label: '蚵仔煎'
-        }, {
-          value: '选项4',
-          label: '龙须面'
-        }, {
-          value: '选项5',
-          label: '北京烤鸭'
-        }],
-        value: ''
-      }
-    },
-    methods: {
-      handleClick (ev, scope) {
-      	console.log(ev, scope)
-      	// 1、event, undefined
-      	// 2、item, undefined
-      	// 3、event, undefined
-      	// 4、event, item
-      	// 5、arguments（'1': event, '2': 'eventComponent'）,item
-      }
-    }
-  }
-&lt;/script&gt;
+<p>js与生俱来便缺少模块化的东西，以至于前辈们在构建网站时很是头疼，自己构建时，往往要自己区分作用域，使用闭包或者对象管理各个模块；引入第三方模块时没有通用的模块化规范，只能手动嵌入<script></script>，并且要管理好前后的依赖；捂心心疼一秒……</p>
+
+<p>所以促进js模块化与模块化统一规范发展迫在眉睫。2009年NodeJS的出现，这标志”Javascript模块化编程”正式诞生。NodeJS的模块化就是参照CommonJS规范实现的，CommonJS规范主要用在服务端。比较出名用在浏览器端的AMD规范。ES6在CommonJS基础上则推出静态化的模块化机制，使之编译时就能确定模块之间的依赖关系。</p>
+
+<p>好的，规范出来了，那么支持这些规范的工具也随着而来了，在NodeJS环境支持下，webpack模块化打包工具乘势席卷了前端圈。好的，接下来回到主角，NodeJS模块加载机制</p>
+
+<h4 id="一贴出commonjs的模块规范">一、贴出CommonJS的模块规范</h4>
+
+<p>1、模块引用</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const element = require('element-ui')
 </code></pre></div></div>
-<h3 id="二事件类型">二、事件类型</h3>
+<p>2、导出模块定义</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// 导出默认模块
+module.exports = 'element-ui'
+// 导出具名模块
+exports.ElInput = 'el-input'
+</code></pre></div></div>
+<p>3、模块标识</p>
+
+<p>可以是符合小驼峰命名的字符串或者是相对路径与绝对路径</p>
+
+<p><strong>在CommonJS模块中，有三个变量，module（代表模块本身)，exports(导出对象)，require（引入模块方法）</strong></p>
+<h4 id="二nodejs的模块加载机制">二、NodeJS的模块加载机制</h4>
+<p>在node中引入模块需要经历三个步骤：</p>
 <ul>
-  <li>简单函数</li>
-  <li>立即执行函数
-    <ul>
-      <li>不带实参立即执行函数</li>
-      <li>带作用域立即执行函数</li>
-      <li>带自定义事件抛出的单个数据</li>
-      <li>带自定义事件抛出的单个数据与携带作用域</li>
-      <li>带自定义事件抛出的多个数据与携带作用域
-        <h4 id="问题">问题</h4>
-      </li>
-    </ul>
-  </li>
-  <li>为什么立即执行函数不立即执行？</li>
-  <li>为什么非要用$event才能带出自定义事件抛出的单个或者多个数据？</li>
-  <li>如果自定义事件要抛出多个数据时怎么接收？
-    <h3 id="分析">分析</h3>
-  </li>
+  <li>路径分析</li>
+  <li>文件定位</li>
+  <li>编译执行</li>
 </ul>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>var fnExpRE = /^([\w$_]+|\([^)]*?\))\s*=&gt;|^function\s*\(/;
-var simplePathRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['[^']*?']|\["[^"]*?"]|\[\d+]|\[[A-Za-z_$][\w$]*])*$/;
-function genHandler(name, handler) {
-  var isMethodPath = simplePathRE.test(handler.value);
-  var isFunctionExpression = fnExpRE.test(handler.value);
-  // 如果匹配到方法路径或者是纯方法则返回对应方法
-  if (isMethodPath || isFunctionExpression) {
-    return handler.value
-  }
-  // 如果是立即执行函数则返回用以下包裹的方法，这就是为什么立即执行函数不执行的原因
-  /* istanbul ignore if */
-  return ("function($event){" + (handler.value) + "}") /
-}
+<p>在node中，模块分为两类：核心模块和文件模块，核心模块在node启动时就被写入内存中，省去了文件定位和编译执行</p>
+<h5 id="1-优先从缓存加载">1、 优先从缓存加载</h5>
+<p>也就是用require（）加载过的，会缓存，下次优先从缓存加载，这也是为什么我们使用webpack构建项目时，为什么第一次构建的时间会慢于第二次构建的原因</p>
+<h5 id="2路径分析和文件定位">2、路径分析和文件定位</h5>
 
-</code></pre></div></div>
-<p>如vue源码，vue模板编译器对模板进行了处理，如果匹配到模板中绑定的方法为方法路径或者为函数则直接返回对应的函数，当触发事件的时候直接执行对应函数；如果匹配到是立即执行函数则对立即执行函数外面包装一层函数，形参为$event，这也是为什么我们能用$event接收自定义事件抛出的数据的原因，如果我们想获取到全部自定义事件抛出的参数就只能用arguments了</p>
-<h3 id="总结">总结</h3>
 <ul>
-  <li>立即执行函数不立即执行，vue对模板进行一层函数封装</li>
-  <li>$event并非总是事件对象，只有在原生dom上绑定事件时才是事件对象，$event其实只是函数调用的第一个实参</li>
-  <li>自定义事件需要接受多个参数且包含作用域时，需要用arguments接收</li>
-  <li>写组件时自定义事件$emit触发事件的时候尽量使用一个对象抛出，避免使用多个数据抛出</li>
+  <li>路径形式文件模块，require（路径），指明了文件的具体位置，能够节约大量的时间</li>
+  <li>自定义模块，require（名字），这类模块查找最费时，它的查找策略是沿着当前node_modules目录逐层往上寻找，直到根目录下的node_modules，文件的路径越深查找越费时，加载越慢</li>
+</ul>
+
+<p>查找到文件的路径，剩下文件的定位，require()在分析标识符的过程中可以不包含扩展名，node会按照.js、.json、.node的次序依次寻找</p>
+
+<p><strong>所以为了加快加载速度，建议大家都使用路径定位文件且加上扩展名，减少node的加载时间</strong></p>
+<h5 id="3模块编译">3、模块编译</h5>
+<ul>
+  <li>.js文件。通过fs模块同步读取文件后编译执行</li>
+  <li>.node文件。通过dlopen()方法加载最后编译生成的文件</li>
+  <li>.json文件。通过fs模块同步读取文件后，用JSON.parse()解析返回的结果</li>
+  <li>其余。全被当做.js文件载入，项目构建中require()后怎么识别，这就轮到webpack上手了</li>
 </ul>
 
         <div class="page-footer">
           <div class="page-tag">
             <span>Tags:</span>
             
-            <a href="/tags#VUE" class="tag">| VUE</a>
+            <a href="/tags#node" class="tag">| node</a>
             
           </div><!-- End Tags -->
           <div class="page-share">
             <span>Share:</span>
-            <a href="https://twitter.com/intent/tweet?text=从vue内联处理器看本质&url=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
-            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
-            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/%E4%BB%8Evue%E5%86%85%E8%81%94%E5%A4%84%E7%90%86%E5%99%A8%E7%9C%8B%E6%9C%AC%E8%B4%A8/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/intent/tweet?text=NodeJS模块加载机制&url=https://zhanyishu.github.io/NodeJS%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/NodeJS%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/NodeJS%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
           </div><!-- End Share -->
         </div>
         <section class="author-box">
