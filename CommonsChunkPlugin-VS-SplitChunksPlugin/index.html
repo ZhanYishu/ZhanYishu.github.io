@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>惰性加载函数 - My personal blog - ZhanYishu</title>
-	<meta name="description" content="设计模式之惰性加载函数">
+	<title>CommonsChunkPlugin VS SplitChunksPlugin - My personal blog - ZhanYishu</title>
+	<meta name="description" content="CommonsChunkPlugin VS SplitChunksPlugin浅析">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta property="og:image" content="">
@@ -52,42 +52,99 @@
 
   <article class="article-page">
     <div class="page-image">
-      <div class="cover-image" style="background: url(/assets/img/post-5.jpg) center no-repeat; background-size: cover;"></div>
+      <div class="cover-image" style="background: url(/assets/img/post-1.jpg) center no-repeat; background-size: cover;"></div>
     </div>
     <div class="wrapper">
       <div class="page-content">
         <div class="header-page">
-          <h1 class="page-title">惰性加载函数</h1>
-          <div class="page-date"><time datetime="2017-04-03 00:00:00 +0800">2017, Apr 03</time></div>
+          <h1 class="page-title">CommonsChunkPlugin VS SplitChunksPlugin</h1>
+          <div class="page-date"><time datetime="2018-07-22 00:00:00 +0800">2018, Jul 22</time></div>
         </div>
-        <p>——在处理浏览器的兼容性中，常用的是进行条件判断，然后选用兼容的方法，这样做会让每次调用该方法时都执行了条件判断，浏览器的环境是固定不变的，造成不必要的性能消耗，这时可以采用惰性加载函数解决</p>
+        <p>等了好久终于等到你，
+webpack团队人员卧薪尝胆五个多月的时间终于带来的webpack4.0，个人觉得webpack4带来的最大优化便是对于懒加载块拆分的优化，删除了CommonsChunkPlugin，新增了优化后的SplitChunksPlugin，那么CommonsChunkPlugin的痛点在哪？SplitChunksPlugin的优化又是在哪？</p>
+<h4 id="1commonschunkplugin的痛">1、CommonsChunkPlugin的痛</h4>
+<p>记得17年始，我刚开始用webpack搭建一个vue的单页应用框架时，我陆续的抛出了几个问题：</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function addEvent(el, event, fn) {
-    if (window.addEventListener) {
-        addEvent = function(el, event, fn) {
-            el.addEventListener(event, fn, false);
-        }
-    } else {
-        addEvent = function(el, event, fn) {
-            el.attachEvent('on' + event, fn);
-        }
-    }
-    addEvent(el, event, fn);
-}
+<p>1、如何避免单页应用首次的入口文件过大？</p>
+
+<p>这个问题处理起来倒简单，webpack支持import()语法实现模块的懒加载，可以做到随用随载，也就是除了首页要用到文件，其他模块使用懒加载就能有效的避免入口文件过大</p>
+
+<p>2、入口模块以及剩下的懒加载模块引用公用的模块时，代码会重复吗？webpack会处理吗？怎么处理？</p>
+
+<p>代码重复是肯定的，如果父级模块中没有引入懒加载模块的共用模块，那么懒加载各模块间就会出现代码重复；webpack能处理，那么怎么处理呢？这时CommonsChunkPlugin就信誓旦旦地登场了，它能够将全部的懒加载模块引入的共用模块统一抽取出来，形成一个新的common块，这样就避免了懒加载模块间的代码重复了，哇！好强大，点个赞。可惜的是，又回到了第一个问题，你把共用的东西都抽出来了，这样又造成了入口文件过大了。以下是CommonsChunkPlugin时代常用的配置</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>new webpack.optimize.CommonsChunkPlugin({
+  name: 'vendor',
+  // 引入node_modules的依赖全抽出来
+  minChunks: function (module, count) {
+    // any required modules inside node_modules are extracted to vendor
+    return (
+      module.resource &amp;&amp;
+      /\.js$/.test(module.resource) &amp;&amp;
+      module.resource.indexOf(
+        path.join(__dirname, '../node_modules')
+      ) === 0
+    )
+  }
+  // 或者直接minChunks: 2，重复模块大于2的全部抽出来
+}),
 </code></pre></div></div>
+<p>总之你在代码重复与入口文件控制方面你得做个平衡，而这个平衡挺不利于多人开发的，也不易于优化，我刚接触时有写了一篇博文也是关于<a href="https://www.cnblogs.com/zhanyishu/p/6587571.html">懒加载</a>，这里对于项目平衡与取舍有做了一些分析，这里就不再展开。</p>
+
+<p><strong>CommonsChunkPlugin的痛，痛在只能统一抽取模块到父模块，造成父模块过大，不易于优化</strong></p>
+
+<h4 id="2splitchunksplugin的好">2、SplitChunksPlugin的好</h4>
+<p>前面讲了那么多，其实SplitChunksPlugin的登场就是为了抹平之前CommonsChunkPlugin的痛的，它能够抽出懒加载模块之间的公共模块，并且不会抽到父级，而是会与首次用到的懒加载模块并行加载，这样我们就可以放心的使用懒加载模块了，以下是官网说明的一些例子：</p>
+
+<p>假设存在以下chunk-a~chunk-d</p>
+
+<p>==chunk-a==: react, react-dom, some components</p>
+
+<p>==chunk-b==: react, react-dom, some other components</p>
+
+<p>==chunk-c==: angular, some components</p>
+
+<p>==chunk-d==: angular, some other components</p>
+
+<p>webpack会自动创建两个chunk模块，结果如下：</p>
+
+<p>==chunk-a~chunk-b==: react, react-dom</p>
+
+<p>==chunk-c~chunk-d==: angular</p>
+
+<p>==chunk-a== to ==chunk-d==: Only the components</p>
+
+<p>SplitChunksPlugin使用官网默认配置基本可以满足大多数单页应用了，以下是我对于多页应用补充的配置</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>optimization: {
+    splitChunks: {
+      // 抽离入口文件公共模块为commmons模块
+      cacheGroups: {
+        commons: {
+          name: "commons",
+          chunks: "initial",
+          minChunks: 2
+        }
+      }
+    }
+  },
+</code></pre></div></div>
+<p><a href="https://github.com/ZhanYishu/vue-cli">vue-cli</a>这是我升级到webpack4.0后的vue-cli配置，结合了happypack，vue-loader@16，单页与多页自动构建等的脚手架</p>
+
+<p><strong>SplitChunksPlugin的好，好在解决了入口文件过大的问题还能有效自动化的解决懒加载模块之间的代码重复问题</strong></p>
 
         <div class="page-footer">
           <div class="page-tag">
             <span>Tags:</span>
             
-            <a href="/tags#JS" class="tag">| JS</a>
+            <a href="/tags#webpack" class="tag">| webpack</a>
             
           </div><!-- End Tags -->
           <div class="page-share">
             <span>Share:</span>
-            <a href="https://twitter.com/intent/tweet?text=惰性加载函数&url=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
-            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
-            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/%E6%83%B0%E6%80%A7%E5%8A%A0%E8%BD%BD%E5%87%BD%E6%95%B0/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
+            <a href="https://twitter.com/intent/tweet?text=CommonsChunkPlugin VS SplitChunksPlugin&url=https://zhanyishu.github.io/CommonsChunkPlugin-VS-SplitChunksPlugin/" title="Share on Twitter" rel="nofollow" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+            <a href="https://facebook.com/sharer.php?u=https://zhanyishu.github.io/CommonsChunkPlugin-VS-SplitChunksPlugin/" title="Share on Facebook" rel="nofollow" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a href="https://plus.google.com/share?url=https://zhanyishu.github.io/CommonsChunkPlugin-VS-SplitChunksPlugin/" title="Share on Google+" rel="nofollow" target="_blank"><i class="fa fa-google" aria-hidden="true"></i></a>
           </div><!-- End Share -->
         </div>
         <section class="author-box">

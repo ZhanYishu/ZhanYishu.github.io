@@ -1,6 +1,14 @@
 [
   
     {
+      "title"    : "CommonsChunkPlugin VS SplitChunksPlugin",
+      "category" : "",
+      "tags"     : "webpack",
+      "url"      : "/CommonsChunkPlugin-VS-SplitChunksPlugin/",
+      "date"     : "2018-07-22 00:00:00 +0800"
+    } ,
+  
+    {
       "title"    : "从vue内联处理器看本质",
       "category" : "",
       "tags"     : "VUE",
